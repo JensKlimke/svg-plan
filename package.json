@@ -1,0 +1,20 @@
+{
+  "name": "svg-plans",
+  "version": "0.1.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "run": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jens Klimke",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.2"
+  },
+  "dependencies": {
+    "@svgdotjs/svg.js": "^3.2.0"
+  }
+}
