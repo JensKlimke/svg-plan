@@ -1,4 +1,4 @@
-import {attributes, style} from "../src/helpers";
+import {attributes, style} from "../src/svg/helpers";
 
 test('Generate style string', () => {
   const styleString = style({border: "1px solid red", "stroke-width": 1});

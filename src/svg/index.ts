@@ -1,4 +1,4 @@
-import XMLNode from "./XMLNode";
+import XMLNode from "../XMLNode";
 import fs from "fs";
 import {KeyValueMap} from "./helpers";
 
