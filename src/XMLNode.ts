@@ -1,5 +1,5 @@
 import xmlFormat from "xml-formatter";
-import {attributes, KeyValueMap} from "./helpers";
+import {attributes, KeyValueMap} from "./svg/helpers";
 
 export default class XMLNode {
   _name : string = '';
