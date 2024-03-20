@@ -104,7 +104,7 @@ test('Generate a path with beziers 2', () => {
 test('Generate a path with beziers 3', () => {
   const svg = SVG();
   svg.view(190, 160, 1, 1);
-  markers(svg, 10, 80, 52.5, 10, 51.5, 10, 95, 80);
+  markers(svg, 10, 80, 52.5, 10, 52.5, 10, 95, 80);
   markers(svg, 95, 80, 137.5, 150, 137.5, 150, 180, 80);
   svg.path()
     .moveTo(10, 80)

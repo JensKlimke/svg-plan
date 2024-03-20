@@ -5,6 +5,7 @@ import {KeyValueMap} from "./helpers";
 type Vector2 = number[];
 
 export abstract class Canvas extends XMLNode {
+  
   rect(x : number, y : number, width : number, height : number, rx ?: number, ry ?: number) {
     // create and add rect
     const p = new Rectangle();
@@ -60,12 +61,36 @@ export abstract class Canvas extends XMLNode {
     // return this
     return p;
   }
-  path() {
+  path(steps ?: string[]) {
     // create and add poly
     const p = new Path();
     this.add(p);
+    // add steps
+    steps && (p._steps = [...steps]);
     // return this
     return p;
+  }
+  group(id ?: string) {
+    // create and set id
+    const group = new GroupNode();
+    id && (group.id(id));
+    // add group
+    this.add(group);
+    // return group
+    return group;
+  }
+  svg(id ?: string) {
+    // create and set id
+    const group = new SVGNode();
+    id && (group.id(id));
+    // add group
+    this.add(group);
+    // return group
+    return group;
+  }
+  transform(tr : string) {
+    this.attributes({transform: tr});
+    return this;
   }
 }
 
@@ -84,12 +109,11 @@ export class GroupNode extends Canvas {
 
 export class SVGNode extends Canvas {
 
-  planWidth : number  = 1189; // default A0 width
-  planHeight : number = 841;  // default A0 height
-  scale : number      = 0.02; // default 1:50
-  unitScale : number  = 10;   // default centimeter (10 mm)
-
-  patterns : Pattern[] = [];  // definition of fill patterns
+  _version :(string | undefined);
+  _size : ([string, string] | undefined);
+  _origin : ([string, string] | undefined);
+  _viewBox : ([number, number, number, number] | undefined);
+  _patterns : Pattern[] = [];  // definition of fill patterns
 
   constructor() {
     super('svg');
@@ -100,26 +124,34 @@ export class SVGNode extends Canvas {
   }
 
   export(filename : string) {
-    fs.writeFileSync(filename, this.code(true));
+    fs.writeFileSync(filename, '<?xml version="1.0" standalone="no"?>\n' + this.code(true));
   }
 
-  view(width : number, height : number, scale : number, unitScale : number = 10) {
+  size(width : string, height : string) {
     // set plan sizes
-    this.planWidth = width;
-    this.planHeight = height;
-    this.scale = scale;
-    this.unitScale = unitScale;
+    this._size = [width, height];
     // return
     return this;
   }
 
-  group(id : string) {
-    // create and set id
-    const group = new GroupNode().id(id);
-    // add group
-    this.add(group);
-    // return group
-    return group;
+  version(v : string) {
+    this._version = v;
+    return this;
+  }
+
+  position(x : string, y : string, width : string, height : string) {
+    // set plan size and origin
+    this._origin = [x, y];
+    this._size = [width, height];
+    // return
+    return this;
+  }
+
+  viewBox(x : number, y : number, width : number, height : number) {
+    // set viewport
+    this._viewBox = [x, y, width, height];
+    // return
+    return this;
   }
 
   pattern(id : string) {
@@ -131,22 +163,20 @@ export class SVGNode extends Canvas {
   _attr() {
     // init attributes
     let attr = {...super._attr()};
-    // calculate view box
-    const w = this.planWidth / (this.scale * this.unitScale);
-    const h = this.planHeight / (this.scale * this.unitScale);
     // add view port and view box (TODO: revers y-axis)
-    attr.xmlns = "http://www.w3.org/2000/svg";
-    attr.version = "1.1";
-    attr.width = `${this.planWidth}mm`;
-    attr.height = `${this.planHeight}mm`
-    attr.viewBox = `0 0 ${w} ${h}`;
+    this._version && (attr.xmlns = "http://www.w3.org/2000/svg");
+    this._version && (attr.version = this._version);
+    this._size && (attr.width = this._size[0]);
+    this._size && (attr.height = this._size[1]);
+    this._origin && (attr.x = this._origin[0]);
+    this._origin && (attr.y = this._origin[1]);
+    this._viewBox && (attr.viewBox = this._viewBox.join(' '));
     // return
     return attr;
   }
 
-  code(format?: boolean): string {
-    return '<?xml version="1.0" standalone="no"?>\n'
-      + super.code(format);
+  code(format : boolean = false): string {
+    return super.code(format);
   }
 
 }
@@ -165,6 +195,9 @@ export abstract class Shape extends XMLNode {
   _fillOpacity : number | undefined;
   _stroke : string | undefined;
   _strokeWidth : number | undefined;
+  transparent() {
+    return this.fill('transparent');
+  }
   fill(color : string, opacity ?: number) {
     this._fill = color;
     this._fillOpacity = opacity;
@@ -308,12 +341,13 @@ export abstract class MultiPointShape extends Shape {
     this._points = points;
     return this;
   }
+  point(point : Vector2) {
+    this._points.push(point);
+    return this; 
+  }
   _attr() {
     const a = {...super._attr()};
     a.points = this._points.map(p => `${p[0]},${p[1]}`).join(" ");
-    a.fill = 'none';
-    a.stroke = 'black';
-    a['stroke-width'] = 5;
     return a;
   }
 }
@@ -327,7 +361,7 @@ export class Polyline extends MultiPointShape {
 
 export class Polygon extends MultiPointShape {
   constructor() {
-    super('polyline');
+    super('polygon');
   }
 }
 
@@ -417,9 +451,8 @@ export class Pattern extends XMLNode {
     this.height = height;
     return this;
   }
-  path(path : string[]) {
-    const p = new Path(path);
-    this.add(p);
+  path(path : Path) {
+    this.add(path);
     return this
   }
   _attr() {

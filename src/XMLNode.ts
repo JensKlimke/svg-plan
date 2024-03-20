@@ -39,7 +39,7 @@ export default class XMLNode {
     return a;
   }
 
-  code(format ?: boolean) : string {
+  code(format : boolean = false) : string {
     // generate body
     const body = this._xml || '' + this._children.map(c => c.code(false)).join(' ');
     // generate code
